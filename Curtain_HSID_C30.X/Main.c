@@ -194,87 +194,86 @@ while(1)
 
   		 //Check the APCI and ESI logic for protection //
 
-if ( ( APCIRealTime == 0) &  (ESIRealTime == 0)) 
-{
-HVSetpointHi1 = 0;    // reset HV //
-HVSetpointLow1 = 0;   // reset HV // 
-}		
+    if ( ( APCIRealTime == 0) &  (ESIRealTime == 0)) 
+        {
+            HVSetpointHi1 = 0;    // reset HV //
+            HVSetpointLow1 = 0;   // reset HV // 
+        }		
   
 		//Now its Time to set HV1 and HV2//
 
-HVSetpoint1 = HVSetpointHi1;  //HV + setting
-HVSetpoint2 = HVSetpointLow1; //HV - setting
+    HVSetpoint1 = HVSetpointHi1;  //HV + setting
+    HVSetpoint2 = HVSetpointLow1; //HV - setting
         // loading the pwm buffer for HV1 and HV2// 
 
-SetPulseOC1(0x0 , HVSetpoint1 +2 );
-SetPulseOC2(0x0 , HVSetpoint2 +2 );
+    SetPulseOC1(0x0 , HVSetpoint1 +2 );
+    SetPulseOC2(0x0 , HVSetpoint2 +2 );
 		//Now its Time to set TempSetpoint1 and TempSetpoint2//
 
-TempSetpoint = TempSetpointHi;
-TempSetpoint = TempSetpointLow + (TempSetpoint * 0xff) ;
-if (TempSetpoint > 360) TempSetpoint = 360;    //limit for TempSetpoint           
+    TempSetpoint = TempSetpointHi;
+    TempSetpoint = TempSetpointLow + (TempSetpoint * 0xff) ;
+    if (TempSetpoint > 360) 
+        TempSetpoint = 360;    //limit for TempSetpoint           
 		//Now its time to read ADCs //
 
-AD1CHS0 = 0x0000;//select AN0 //
-AD1CON1bits.SAMP = 1; // start sampling  ADC1
-while (!AD1CON1bits.DONE);
-AD1CON1bits.DONE = 0;
-ResultHV = ADC1BUF0;
-ResultHV >>= 2; //adjust adc from 10 bit to 8 bit value//
-VoltageMonitorLow1 = ResultHV ;
+    AD1CHS0 = 0x0000;//select AN0 //
+    AD1CON1bits.SAMP = 1; // start sampling  ADC1
+    while (!AD1CON1bits.DONE);
+    AD1CON1bits.DONE = 0;
+    ResultHV = ADC1BUF0;
+    ResultHV >>= 2; //adjust adc from 10 bit to 8 bit value//
+    VoltageMonitorLow1 = ResultHV ;
 	
 
          
-     if (LoopCounter++ == 15)
-    { 
-      LoopCounter =0; //reset it for next time //
+    if (LoopCounter++ == 15)
+        { 
+            LoopCounter =0; //reset it for next time //
 
     	 //  control the Heater based on PID algorithm //
   
-         Temperature = TempAverageCopy;  
-         HeatPower = Calculate(TempSetpoint , Temperature);       
+            Temperature = TempAverageCopy;  
+            HeatPower = Calculate(TempSetpoint , Temperature);       
 
-AD1CHS0 = 0x0003;  //select AN3(REVA)  AN2(old) //
-AD1CON1bits.SAMP = 1; // start sampling  ADC1
-while (!AD1CON1bits.DONE);
-AD1CON1bits.DONE = 0;
-ResultTemperature = ADC1BUF0;
-Temperature = (ResultTemperature * 2 )/3 ;
+            AD1CHS0 = 0x0003;  //select AN3(REVA)  AN2(old) //
+            AD1CON1bits.SAMP = 1; // start sampling  ADC1
+            while (!AD1CON1bits.DONE);
+            AD1CON1bits.DONE = 0;
+            ResultTemperature = ADC1BUF0;
+            Temperature = (ResultTemperature * 2 )/3 ;
 
 
-     //Now its time to calculate average of Temperature for Display //
-     TempAverage = Temperature + TempAverage;
-     AverageCounter++;	
+        //Now its time to calculate average of Temperature for Display //
+        TempAverage = Temperature + TempAverage;
+        AverageCounter++;	
 
-   if (AverageCounter == 5000) //if we have 2 samples, control heatthers //
-     {
-    
-         TempAverage = TempAverage /  5000      ;    // this is real average of temp and calibration //
-    
-        
-		 //clear all the buffers//	
-         AverageCounter = 0;
-		 TempAverageCopy = TempAverage;         
-         TempAverage=0;
+        if (AverageCounter == 5000) //if we have 2 samples, control heatthers //
+            {
+                TempAverage = TempAverage /  5000      ;    // this is real average of temp and calibration //
+ 
+                //clear all the buffers//	
+                AverageCounter = 0;
+                TempAverageCopy = TempAverage;         
+                TempAverage=0;
 
  //now digital filtering for display for noise reduction//
 
-     TempDisplay = TempAverageCopy + TempDisplay; 
-     DisplayCounter++;
+                TempDisplay = TempAverageCopy + TempDisplay; 
+                DisplayCounter++;
 
-    if ( DisplayCounter == 30)
-     {
-         DisplayCounter =0; 
-         TempDisplay = TempDisplay /30;      
+            if ( DisplayCounter == 30)
+              {
+                DisplayCounter =0; 
+                TempDisplay = TempDisplay /30;      
 
-         ResultTemperatureCopy = TempDisplay;
-         TemperatureLowDisplay = ResultTemperatureCopy;
-         ResultTemperatureCopy >>= 8;
-         TemperatureHiDisplay = ResultTemperatureCopy;
-         TempDisplay =0 ;
-      }//display filter end// 
-	 }   //end of main loop for thermo controller//
-     }               
+                ResultTemperatureCopy = TempDisplay;
+                TemperatureLowDisplay = ResultTemperatureCopy;
+                ResultTemperatureCopy >>= 8;
+                TemperatureHiDisplay = ResultTemperatureCopy;
+                TempDisplay =0 ;
+              }//display filter end// 
+            }   //end of main loop for thermo controller//
+        }               
     }//for while
    return 0;
 
