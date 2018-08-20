@@ -69,7 +69,7 @@ int main(void)
     unsigned char APCIRealTime=0;
     unsigned char ESIRealTime=0;
     unsigned char ProbeId=0x0;
-
+    unsigned char version = 0x9;
 
 
 // init the SPI 1 and SPI2
@@ -143,75 +143,53 @@ while(1)
     
     //Time to check SPI2 for any new data//
            //time to check spi flag//
- if ( SPIFlag == 1  )
-  {              
-	          SPIFlag =0;
-              PORTGbits.RG15 = 0 ;
-   				//What to do wirh the first byte ?//
-
-				if (CommandCounter1==4)//is it first byte?//
-					{
-					 CommandCounter1 = 0;
-                     txdData1 =9;         // Version;
-		             if (Instruction1 == 1)
-                              {
-						      TempSetpointLow = rxdData1;
-                              }
-                           
-					 if  (Instruction1 == 2)
-                         	 {
-                             HVSetpointLow1 = rxdData1;
-                             }
-					 } 
-	           
-			   else if  (CommandCounter1==1)//is it second byte?//
-					{
-                       Instruction1 = rxdData1;
-				    	 if ((Instruction1 == 1) ^ (Instruction1 == 11))
-                            {
-                             txdData1=TemperatureLowDisplay;                             }
-					      if  ((Instruction1 == 2) ^ (Instruction1 == 12))
-                            {
-                          txdData1=VoltageMonitorLow1;
-                            }
-  						  if  (Instruction1 == 3)
-                         	 {                             
+    if ( SPIFlag == 1  )
+        {              
+	        SPIFlag =0;
+            PORTGbits.RG15 = 0 ;
+   			switch(CommandCounter1) 
+              {
+                case 4: 
+                        CommandCounter1 = 0;
+                        txdData1 = version;
+                    if(Instruction1 == 1)
+                       TempSetpointLow = rxdData1;
+                    else if((Instruction1 == 2) ^ (Instruction1 == 12))
+                            HVSetpointLow1 = rxdData1;
+                    break;
+                    
+                case 1:      
+                        Instruction1 = rxdData1;
+                    if ((Instruction1 == 1) ^ (Instruction1 == 11))
+                         txdData1=TemperatureLowDisplay;
+                    else if ((Instruction1 == 2) ^ (Instruction1 == 12))
+                            txdData1=VoltageMonitorLow1;
+                    else if (Instruction1 == 3)
+                            txdData1=0;
+                    break;
+                    
+                case 2:   
+                    if ((Instruction1 == 1)^(Instruction1 == 11))	
+                         txdData1=TemperatureHiDisplay;
+                    else if ((Instruction1 == 2)^(Instruction1 == 12))
+                             txdData1=0;     
+                    else if (Instruction1 == 3)
                              txdData1=0;
-                             }			
-                     }
-                else if   (CommandCounter1==2)//is it third byte?//
-					      {
-					   
-                           if ((Instruction1 == 1)^(Instruction1 == 11))
-                              {  	
-                              txdData1=TemperatureHiDisplay;
-                              
-							  }	
-					       
-                           if ((Instruction1 == 2)^(Instruction1 == 12))
-                             {
-                             txdData1=0 ;//VoltageMonitorHi1; 
-                           
-                             }	
-					      if  (Instruction1 == 3)
-                         	 {                   
-                             txdData1=0;                            
-                             }	
-                         }
-                else if   (CommandCounter1==3)//is it fourth byte?//
-					      {  
-                             txdData1=0;//0x55;			                 
-                          
-                          if (Instruction1 == 1)
-                              { 
-						      TempSetpointHi = rxdData1;
-                              }
-				          if  (Instruction1 == 2)
-                         	 {
-                             HVSetpointHi1 = rxdData1;
-                             }
-                            }
-     }
+                    break;
+                    
+                case 3:
+                        txdData1=0;
+                    if (Instruction1 == 1)
+						  TempSetpointHi = rxdData1;
+                    else if  (Instruction1 == 2)
+                              HVSetpointHi1 = rxdData1;
+                    break;
+                    
+                default:
+                         CommandCounter1 = 0;
+                         break;
+            }  	
+        }
 
 
   		 //Check the APCI and ESI logic for protection //
